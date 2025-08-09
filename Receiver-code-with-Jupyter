@@ -1,0 +1,249 @@
+#Needed imports
+import meshtastic
+import meshtastic.serial_interface
+import time
+import threading
+import ipywidgets as widgets
+from IPython.display import display
+import serial
+
+#####
+
+#Install the right driver for your device: https://www.silabs.com/software-and-tools/usb-to-uart-bridge-vcp-drivers?tab=downloads
+
+#####
+
+#Check which ports are opened
+import serial.tools.list_ports
+ports = list(serial.tools.list_ports.comports())
+for port in ports:
+    print(port.device)
+
+#####
+
+#Choose the right COM for every next step
+
+#####
+
+#Only the first time, if SerialEnabled is not equal to TRUE
+!meshtastic --port COM9 --set device.serialEnabled true --reboot
+
+#####
+
+#Only if you want to check your device
+from meshtastic.serial_interface import SerialInterface
+iface_G = SerialInterface(devPath="COM9")
+iface_G.close()
+print("Gaulix-gauche :", iface_G.myInfo)
+
+#####
+
+#Only if you want to get information from your device
+!python -m meshtastic --port COM9 --info
+iface_G.close()
+
+#####
+
+#Main code
+import serial
+import time
+import re
+import hashlib
+
+###INITIALIZING PYTHON VARIABLES
+data = []
+
+###INITIALIZING THE DEVICE
+ser = serial.Serial('COM9', 115200, timeout=1)
+print("📡 Listening on COM (115200)")
+
+###CREATING A FUNCTION THAT CONCATENATES LINES
+def reconstruct_log_lines(ascii_data):
+    lines = [l for l in ascii_data.splitlines() if l.strip()]
+    reconstructed = []
+    current_line = ""
+
+    for line in lines:
+        if re.match(r'^(DEBUG|INFO|WARN)\s+\|', line):
+            if current_line:
+                reconstructed.append(current_line)
+            current_line = line
+        else:
+            current_line += ' ' + line.strip()
+
+    if current_line:
+        reconstructed.append(current_line)
+
+    return reconstructed
+
+
+
+###LISTENING TO THE DEVICE
+try:
+    while True:
+###READING ALL DATA RECEIVED FROM THE DEVICE AND DECODING IT
+        if ser.in_waiting > 0:
+            raw_data = ser.read(ser.in_waiting)
+            try:
+                ascii_data = raw_data.decode('utf-8', errors='ignore')
+            except UnicodeDecodeError:
+                continue
+
+###RECONSTRUCTING LOG LINES
+            reconstructed_lines = reconstruct_log_lines(ascii_data)
+            
+            for line in reconstructed_lines:
+###TO DEBUG, USE NEXT LINE
+                #print(line)
+
+###CHECKING IF RECEIVED TEXT IS A BITCOIN TRANSACTION MESSAGE
+                if "Received text msg from=" in line:
+                    match_msg = re.search(r'msg=([^\r\n]*)', line)
+                    if match_msg:
+                        msg_content = match_msg.group(1).strip()
+
+###IF IT'S A BITCOIN TRANSACTION, EXTRACT ITS INFORMATION
+                        if "BTC" in msg_content:     
+                            taille_msg = len(msg_content)
+                            match = re.search(r'BTC\s+(\d+)\s+([0-9a-fA-F]+)\s+(\d+)/(\d+)\s+(.+?)(?= \x1b|$)', msg_content)
+                            
+                            if match:
+                                signature_length = int(match.group(1))
+                                checksum = match.group(2)
+                                part_num = int(match.group(3))
+                                part_total = int(match.group(4))
+                                part_message = match.group(5)
+                                #print(signature_length,checksum,part_num,part_total,part_message)
+
+###ASSUMING ALL RECEIVED MESSAGES SHOULD BE 70 CHARACTERS LONG         
+                                if part_num < part_total:
+                                    #print("Test n°1 - Done")
+                                    
+                                    if len(part_message) == 70:
+                                        print(f"Message found: checksum {checksum} - part {part_num}/{part_total}")
+                                        #print(f"Message length: {signature_length}")
+                                        #print(f"Checksum: {checksum}")
+                                        #print(f"Part number: {part_num}")
+                                        #print(f"Total number of messages: {part_total}")
+                                        #print(f"Message part: {part_message}")
+                                    else:
+                                        print(f"❌ Invalid length {part_num}/{part_total} (not equal to 70)")
+                                        signature_length = ""
+                                        checksum = ""
+                                        part_num = ""
+                                        part_total = ""
+                                        part_message = ""
+                                        #print(ascii_data)
+                                        #print(part_message)                       
+                                
+###CONSIDERING THE NEXT PACKET DO NOT HAVE A LENGTH EQUAL TO 70                                       
+                                if part_num == part_total:
+                                    #print("Test n°2 - Done")
+                                    
+                                    if len(part_message) == signature_length - (part_total-1)*70:
+                                        print(f"Message found: checksum {checksum} - part {part_num}/{part_total}")
+                                        #print(f"Message length: {signature_length}")
+                                        #print(f"Checksum: {checksum}")
+                                        #print(f"Part number: {part_num}")
+                                        #print(f"Total number of messages: {part_total}")
+                                        #print(f"Message part: {part_message}")
+                                    else:
+                                        print("❌ Invalid message length")
+                                        signature_length = ""
+                                        checksum = ""
+                                        part_num = ""
+                                        part_total = ""
+                                        part_message = ""
+                                        #print(ascii_data)
+                                        #print(part_message)
+                                        
+###ADDING THE RECEIVED BITCOIN TRANSACTION PART TO THE DATA LIST                                
+                                data.append([signature_length,checksum,part_num,part_total,part_message])
+                                ser.write(b"ACK\n")
+                                #print(f"There is still {ser.in_waiting} bytes to read")                        
+                                #print(data)
+                            
+###IF MATCH ISN'T OKAY, IT PRINTS AN ERROR
+                            else:
+                                print(f"❌ Invalid message format: {msg_content}")
+                                print(line)
+                
+###REMOVING DUPLICATE MESSAGES FROM THE DATA LIST
+                unique_data = []
+                for item in data:
+                    if item not in unique_data:
+                        unique_data.append(item)
+                
+                data = unique_data
+                
+###GROUPING MESSAGES BY CHECKSUM
+                grouped = {}
+                
+                for index, item in enumerate(data):
+                    checksum = item[1]
+                    part_num = item[2]
+                    part_total = item[3]
+                    part_message = item[4]
+                
+                    if checksum not in grouped:
+                        grouped[checksum] = {
+                            'total': part_total,
+                            'parts': {},
+                            'indexes': []
+                        }
+                
+###ADDING EACH MESSAGE PART ONLY IF NOT ALREADY PRESENT
+                    if part_num not in grouped[checksum]['parts']:
+                        grouped[checksum]['parts'][part_num] = part_message
+                        grouped[checksum]['indexes'].append(index)
+                
+###LIST OF INDEXES TO DELETE FROM DATA
+                to_delete = []
+                
+###CHECKING FOR COMPLETED TRANSACTIONS
+                for checksum, group in grouped.items():
+                    parts_dict = group['parts']
+                    part_total = group['total']
+                    indexes = group['indexes']
+                
+###CHECKING IF EVERY PART OF THE TRANSACTION IS THERE
+                    if len(parts_dict) == part_total:
+                        full_message = ''.join([parts_dict[i] for i in sorted(parts_dict)])
+                
+###CALCULATING SHA-256 OF THE FULL MESSAGE AND COMPARING FIRST 7 BYTES WITH ORIGINAL CHECKSUM
+                        full_message_bytes = bytes.fromhex(full_message)
+                        full_message_hex = hashlib.sha256(full_message_bytes).hexdigest()
+                        full_checksum = full_message_hex[:7]
+                        #print(f"SHA-256 Hash: {full_message_hex}")
+                        #print(f"7th first bytes: {checksum}")
+                        #print(f"Checksum searched: {full_checksum}")
+                        
+                        if checksum.lower() == full_checksum.lower():
+                            #print(f"Length of the message: {len(full_message)}")
+                            #print(f"Checksum: {checksum}")
+                            #print(f"Number of messages: {part_total}")
+                            #print("✅ Checksum: OK")
+                            print(f"✅ Transaction Bitcoin: {full_message}")
+
+###DELETING USED INDEXES FROM DATA
+                            to_delete.extend(indexes)
+
+###DELETE INDEXES WHICH HAD BEEN USED IN DATA
+                            for i in sorted(to_delete, reverse=True):
+                                del data[i]
+                
+                    #print(f"Messages still in the data list: {data}")
+                        else:
+                            print("❌ Checksum: INVALID")
+
+        else:
+            time.sleep(0.5)
+
+###INTERRUPTS THE SCRIPT IF NEEDED
+except KeyboardInterrupt:
+    print("\n🛑 Stopped by user")
+
+###CLOSES THE COM PORT WHEN THE SCRIPT IS INTERRUPTED
+finally:
+    ser.close()
+    print(f"🛑 COM {ser.port} closed")
