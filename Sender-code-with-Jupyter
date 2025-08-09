@@ -32,9 +32,9 @@ for port in ports:
 
 #Only if you want to check your device
 from meshtastic.serial_interface import SerialInterface
-iface_G = SerialInterface(devPath="COM6")
-iface_G.close()
-print("Gaulix-droit :", iface_G.myInfo)
+iface_D = SerialInterface(devPath="COM6")
+iface_D.close()
+print("Gaulix-droit :", iface_D.myInfo)
 
 #####
 
