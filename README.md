@@ -71,11 +71,7 @@ url = "https://mempool.space/testnet/api/tx"
 resp = requests.post(url, data=raw_hex, timeout=20)
 
 if resp.status_code == 200:
-
-    print("Transaction broadcasted")
-    
+    print("Transaction broadcasted")    
     print("TXID:", resp.text.strip())
-    
 else:
-
     print("Error:", resp.status_code, resp.text)
