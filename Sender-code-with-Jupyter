@@ -1,0 +1,81 @@
+#Needed imports
+import meshtastic
+import meshtastic.serial_interface
+import time
+import threading
+import ipywidgets as widgets
+from IPython.display import display
+import serial
+
+#####
+
+#Install the right driver for your device: https://www.silabs.com/software-and-tools/usb-to-uart-bridge-vcp-drivers?tab=downloads
+
+#####
+
+#Check which ports are opened
+import serial.tools.list_ports
+ports = list(serial.tools.list_ports.comports())
+for port in ports:
+    print(port.device)
+
+#####
+
+#Choose the right COM for every next step
+
+#####
+
+#Only the first time, if SerialEnabled is not equal to TRUE
+!meshtastic --port COM6 --set device.serialEnabled true --reboot
+
+#####
+
+#Only if you want to check your device
+from meshtastic.serial_interface import SerialInterface
+iface_G = SerialInterface(devPath="COM6")
+iface_G.close()
+print("Gaulix-droit :", iface_G.myInfo)
+
+#####
+
+#Only if you want to get information from your device
+!python -m meshtastic --port COM6 --info
+iface_D.close()
+
+#####
+
+#Main code
+from meshtastic.serial_interface import SerialInterface
+import time
+import hashlib
+import math
+
+###MESSAGE TO SEND
+big_message ="02000000000101fd2bcef118caa1f19079ce8bdf3cbc234cd05e384db07120e6f043248ce502ff0000000000fdffffff019185010000000000160014c0ecfb7c6ddf8882754b023d59771ac05949157b0247304402207a2da7a66eec50f02a32e98ca60d6d4985e48d884143b9744668072c331f8eb902205210183b15139213a4354d28aa7e9d83b514ce2ff332cbea8df492911278e943012102b401438d5800f1aafd846195a830d73a32bb856cefbac5b6d5ce16ddf5bc9a40d1a14600"
+total_length = len(big_message)
+
+long_message_bytes = bytes.fromhex(big_message)
+checksum = hashlib.sha256(long_message_bytes).hexdigest()[:7]
+
+###PARAMETERS
+MAX_PAYLOAD_SIZE = 94
+TAG_OVERHEAD = 24
+CHUNK_SIZE = MAX_PAYLOAD_SIZE - TAG_OVERHEAD
+
+chunks = [big_message[i:i+CHUNK_SIZE] for i in range(0, total_length, CHUNK_SIZE)]
+total_parts = len(chunks)
+
+###CONNECTING TO THE DEVICE
+iface_D = SerialInterface(devPath="COM6", noProto=False)
+time.sleep(2)
+
+###EVERY MESSAGE IS SENT
+for i, chunk in enumerate(chunks):
+    msg_to_send = f"BTC {total_length} {checksum} {i+1}/{total_parts} {chunk}"
+
+    iface_D.sendText(msg_to_send)
+    print(f"📨 Sent: {msg_to_send} \n")
+    time.sleep(1)  # délai léger pour éviter collisions
+
+iface_D.close()
+print("✅ Every parts had been sent")
