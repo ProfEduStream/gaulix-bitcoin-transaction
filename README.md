@@ -14,6 +14,14 @@ Finally, the raw transaction is broadcast to the Bitcoin Network, either with a 
 
 ---
 
+## How to setup your mesh node
+
+The documentation and firmware are available here: https://gaulix.fr/gaulix-pour-les-noobs/
+
+They are based on the open-source Meshtastic firmware: https://github.com/meshtastic/firmware?tab=readme-ov-file
+
+---
+
 ## Python Requirements
 
 > Tested with Anaconda / Jupyter Notebook
