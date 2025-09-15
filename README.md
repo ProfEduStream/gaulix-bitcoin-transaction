@@ -22,18 +22,18 @@ They are based on the open-source Meshtastic firmware: https://github.com/meshta
 
 ---
 
-# The "B on Lille" conference
+## The "B on Lille" conference
 
-## Overview
+### Overview
 
 The "B on Lille" is a Bitcoin conference taking place on September 26th, 27th, and 28th, organized by the Bitcoin Lille nonprofit association. More details are available on our website: https://bitcoinlille.fr/b-on-lille/
 
-## The Mission
+### The Mission
 
-### September 19th–22nd
+#### September 19th–22nd
 A Bitcoin Lille member will receive two mesh antennas.
 
-### September 23rd
+#### September 23rd
 Four Bitcoin Lille members will work together to deploy both antennas in Belgium and test the mesh network.
 
 To do so:
@@ -49,7 +49,7 @@ The bitcoiner in Brussels will then broadcast a message - "Hi guys! I'm in Bruss
 
 Meanwhile, the bitcoiner in Bailleul will listen to the network using Receiver-code-with-Jupyter. If the message is successfully received, the mission is considered a success.
 
-### September 27th (1:30 PM – 3:00 PM GMT+1)
+#### September 27th (1:30 PM – 3:00 PM GMT+1)
 We need a Brussels-based bitcoiner to be available on Telegram with the "B on Lille" organizers. He will need a computer, a LoRa device, and must remain available by call during the session.
 
 At 1:30 PM, before the conference, a "send & receive" test will be conducted to confirm that everything works properly.
@@ -64,7 +64,7 @@ After confirming reception, the speaker will connect his computer to the interne
 This will demonstrate that a Bitcoin transaction can be transmitted from one country to another (Belgium → France) via a mesh network — without using the internet.
 This proves that, even if Belgium were cut off from the internet, Belgian bitcoiners could still send Bitcoin transactions through a mesh network to French bitcoiners, who could then broadcast them.
 
-### Resilience.
+#### Resilience.
 
 ---
 
