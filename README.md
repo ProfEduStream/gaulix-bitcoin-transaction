@@ -2,13 +2,15 @@
 
 ## Overview
 
-The sender splits the raw transaction into *x* parts and sends each part to the mesh network.
+In an ideal world, a mesh network could send messages containing thousands of bytes. However, that's not the case, meaning a signed Bitcoin transaction can't be sent in a single package over a mesh network.
+
+That's why, in this project, the sender splits the raw transaction into *x* parts and sends each part to the mesh network.
 
 The receiver collects each part of the raw transaction and assembles them (even if they are not received in the same packet). Then it displays the raw transaction.
 
 A checksum is used to verify whether the raw transaction is complete.
 
-Finally, the raw transaction is broadcast to the Bitcoin Network manually — either with a Bitcoin wallet (like **Sparrow**) or with an API call to **mempool.space**.
+Finally, the raw transaction is broadcast to the Bitcoin Network, either with a Bitcoin wallet (like **Sparrow**) or with an API call to **mempool.space**.
 
 ---
 
@@ -17,9 +19,9 @@ Finally, the raw transaction is broadcast to the Bitcoin Network manually — ei
 > Tested with Anaconda / Jupyter Notebook
 
 ```bash
-pip install ipywidgets
-pip install pyserial
-pip install meshtastic
+!pip install ipywidgets
+!pip install pyserial
+!pip install meshtastic
 ```
 
 ---
@@ -76,7 +78,67 @@ resp = requests.post(url, data=raw_hex, timeout=20)
 
 if resp.status_code == 200:
     print("Transaction broadcasted")
+
+
+
     print("TXID:", resp.text.strip())
 else:
     print("Error:", resp.status_code, resp.text)
 ```
+
+---
+
+# The "B on Lille" conference
+
+## Overview
+
+The "B on Lille" is a Bitcoin conference taking place on September 26th, 27th, and 28th, organized by the Bitcoin Lille nonprofit association.
+More details are available on our website: https://bitcoinlille.fr/b-on-lille/
+
+## The Mission
+
+September 19th–22nd
+A Bitcoin Lille member will receive two mesh antennas.
+
+September 23rd
+Four Bitcoin Lille members will work together to deploy both antennas in Belgium and test the mesh network.
+
+To do so:
+
+One bitcoiner will remain in Bailleul.
+
+The other three will travel together and:
+
+One bitcoiner will deploy the first antenna at point A in Belgium. He will bring a computer, a LoRa device, and remain available by call throughout the mission.
+
+One bitcoiner will deploy the second antenna at point B in Belgium. He will also bring a computer, a LoRa device, and remain available by call.
+
+One bitcoiner will travel to Brussels with a computer and a LoRa device, staying available by call during the mission.
+
+The second antenna (point B) should ideally cover at least half of Brussels.
+The bitcoiner in Brussels will then broadcast a message —
+"Hi guys! I'm in Brussels and I'm reaching out to you, Bitcoin Lille!" —
+over the Gaulix Network using the Sender-code-with-Jupyter script.
+(The higher the broadcasting position, the better the coverage.)
+
+Meanwhile, the bitcoiner in Bailleul will listen to the network using Receiver-code-with-Jupyter.
+If the message is successfully received, the mission is considered a success.
+
+September 27th (1:30 PM – 3:00 PM GMT+1)
+We need a Brussels-based bitcoiner to be available on Telegram with the "B on Lille" organizers.
+He will need a computer, a LoRa device, and must remain available by call during the session.
+
+At 1:30 PM, before the conference, a "send & receive" test will be conducted to confirm that everything works properly.
+
+During the conference (around 2:30 PM), when prompted by the organizer, the Brussels bitcoiner will broadcast the message:
+"Hi guys! I'm in Brussels and I'm reaching out to you, Bitcoin Lille!"
+Simultaneously, the speaker in Lille will listen to the network using Receiver-code-with-Jupyter.
+
+Once received, the organizer will ask the Brussels bitcoiner to broadcast a signed Bitcoin transaction from Brussels, which the speaker will also receive.
+
+After confirming reception, the speaker will connect his computer to the internet and broadcast the transaction manually via the mempool.space API.
+
+This will demonstrate that a Bitcoin transaction can be transmitted from one country to another (Belgium → France) via a mesh network — without using the internet.
+This proves that, even if Belgium were cut off from the internet, Belgian bitcoiners could still send Bitcoin transactions through a mesh network to French bitcoiners, who could then broadcast them.
+
+Resilience.
