@@ -53,9 +53,21 @@ import hashlib
 ###INITIALIZING PYTHON VARIABLES
 data = []
 
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+
 ###INITIALIZING THE DEVICE
-ser = serial.Serial('COM9', 115200, timeout=1)
+ser = serial.Serial('COM8', 115200, timeout=1)
 print("📡 Listening on COM (115200)")
+
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
 
 ###CREATING A FUNCTION THAT CONCATENATES LINES
 def reconstruct_log_lines(ascii_data):
@@ -93,8 +105,21 @@ try:
             reconstructed_lines = reconstruct_log_lines(ascii_data)
             
             for line in reconstructed_lines:
+
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+                
 ###TO DEBUG, USE NEXT LINE
                 #print(line)
+
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
 
 ###CHECKING IF RECEIVED TEXT IS A BITCOIN TRANSACTION MESSAGE
                 if "Received text msg from=" in line:
@@ -102,6 +127,16 @@ try:
                     if match_msg:
                         msg_content = match_msg.group(1).strip()
 
+###IF IT'S A BITCOIN TRANSACTION, EXTRACT ITS INFORMATION
+                        if "TEXT" in msg_content:     
+                            text_received = re.search(r'TEXT\s+(\d+)\s+', ascii_data)
+                            
+                            if text_received:
+                                L = int(text_received.group(1))
+                                start = text_received.end()                 # position juste après "TEXT <len> "
+                                msg_received = ascii_data[start:start+L] # on prend exactement L caractères
+                                print(msg_received)
+                        
 ###IF IT'S A BITCOIN TRANSACTION, EXTRACT ITS INFORMATION
                         if "BTC" in msg_content:     
                             taille_msg = len(msg_content)
@@ -247,3 +282,22 @@ except KeyboardInterrupt:
 finally:
     ser.close()
     print(f"🛑 COM {ser.port} closed")
+
+
+
+#BROADCAST THE SIGNED BITCOIN TRANSACTION THROUGH THE MEMPOOL API
+
+import requests
+
+#Your signed transaction
+raw_hex = "02000000000101f0dca7caccc126a51a1a9bca12bd8686b8d9f56bcb1b84245b8f94d8c19a45d40300000000fdffffff0116ab0000000000001600149d140517b4b6d50f4c4d5950408f308eb72c584902473044022070ac5ef095a522f0d5fe35966d583d5fcbd2dda0e14b5e513008e8ed774e5f16022011a51b72f64ee2d637c45391ed8772918e551b0720feac94d143fc4201ad4b0b012103f7fe8dad5f510e19e393286cbbfbfb64f5973625d028b185145cdacbed7092bf37454700"
+
+#Endpoint mempool.space mainnet
+url = "https://mempool.space/testnet/api/tx"
+resp = requests.post(url, data=raw_hex, timeout=20)
+
+if resp.status_code == 200:
+    print("✅ Transaction broadcasted")
+    print("TXID:", resp.text.strip())
+else:
+    print("Error:", resp.status_code, resp.text)
