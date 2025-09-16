@@ -50,32 +50,112 @@ import time
 import hashlib
 import math
 
-###MESSAGE TO SEND
-big_message ="02000000000101fd2bcef118caa1f19079ce8bdf3cbc234cd05e384db07120e6f043248ce502ff0000000000fdffffff019185010000000000160014c0ecfb7c6ddf8882754b023d59771ac05949157b0247304402207a2da7a66eec50f02a32e98ca60d6d4985e48d884143b9744668072c331f8eb902205210183b15139213a4354d28aa7e9d83b514ce2ff332cbea8df492911278e943012102b401438d5800f1aafd846195a830d73a32bb856cefbac5b6d5ce16ddf5bc9a40d1a14600"
-total_length = len(big_message)
-
-long_message_bytes = bytes.fromhex(big_message)
-checksum = hashlib.sha256(long_message_bytes).hexdigest()[:7]
-
-###PARAMETERS
-MAX_PAYLOAD_SIZE = 94
-TAG_OVERHEAD = 24
-CHUNK_SIZE = MAX_PAYLOAD_SIZE - TAG_OVERHEAD
-
-chunks = [big_message[i:i+CHUNK_SIZE] for i in range(0, total_length, CHUNK_SIZE)]
-total_parts = len(chunks)
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
 
 ###CONNECTING TO THE DEVICE
 iface_D = SerialInterface(devPath="COM6", noProto=False)
 time.sleep(2)
 
-###EVERY MESSAGE IS SENT
-for i, chunk in enumerate(chunks):
-    msg_to_send = f"BTC {total_length} {checksum} {i+1}/{total_parts} {chunk}"
 
-    iface_D.sendText(msg_to_send)
-    print(f"📨 Sent: {msg_to_send} \n")
-    time.sleep(1)  # délai léger pour éviter collisions
+#IF VALUE = 0, THEN IT BROADCASTS THE TEXT MESSAGE
+#IF VALUE = 1, THEN IT BROADCAST THE SIGNED BITCOIN TRANSACTION
 
-iface_D.close()
-print("✅ Every parts had been sent")
+value = 0
+
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+
+if value == 0:
+    ###MESSAGE TEXT TO SEND
+    text_message ="Hi guys ! I'm in Brussels and I'm reaching out to you, Bitcoin Lille !"
+    
+    ###CREDITS TEXT TO SEND IF NOT RECEIVED AFTER THE SIGNED BITCOIN TRANSACTION
+    #text_message = "Credits: Bitcoin lille, Nicolas Jaume, ProfEduStream, Synthex, Bitcoinizam & Plan B Network 🟠"
+    total_text_length = len(text_message)
+    
+    ###PARAMETERS
+    MAX_PAYLOAD_SIZE = 94
+    TAG_OVERHEAD = 24
+    CHUNK_SIZE = MAX_PAYLOAD_SIZE - TAG_OVERHEAD
+    
+    msg_text_to_send = f"TEXT {total_text_length} {text_message}"
+    
+    iface_D.sendText(msg_text_to_send)
+    print(f"📨 Sent: {msg_text_to_send} \n")
+
+    iface_D.close()
+    print("✅ The message had been sent")
+
+else:
+    ###MESSAGE TEXT TO SEND
+    text_message ="I'm sending a signed Bitcoin transaction over the Meshtastic network. Thanks Gaulix !"
+    total_text_length = len(text_message)
+    
+    ###PARAMETERS
+    MAX_PAYLOAD_SIZE = 94
+    TAG_OVERHEAD = 24
+    CHUNK_SIZE = MAX_PAYLOAD_SIZE - TAG_OVERHEAD
+    
+    msg_text_to_send = f"TEXT {total_text_length} {text_message}"
+    
+    iface_D.sendText(msg_text_to_send)
+    print(f"📨 Sent: {msg_text_to_send} \n")
+
+
+    time.sleep(5)
+    
+    
+    ###SIGNED BITCOIN TRANSACTION TO SEND
+    btc_message ="02000000000101f0dca7caccc126a51a1a9bca12bd8686b8d9f56bcb1b84245b8f94d8c19a45d40300000000fdffffff0116ab0000000000001600149d140517b4b6d50f4c4d5950408f308eb72c584902473044022070ac5ef095a522f0d5fe35966d583d5fcbd2dda0e14b5e513008e8ed774e5f16022011a51b72f64ee2d637c45391ed8772918e551b0720feac94d143fc4201ad4b0b012103f7fe8dad5f510e19e393286cbbfbfb64f5973625d028b185145cdacbed7092bf37454700"
+    total_btc_length = len(btc_message)
+    
+    long_btc_message_bytes = bytes.fromhex(btc_message)
+    checksum_btc = hashlib.sha256(long_btc_message_bytes).hexdigest()[:7]
+    
+    ###PARAMETERS
+    MAX_PAYLOAD_SIZE = 94
+    TAG_OVERHEAD = 24
+    CHUNK_SIZE = MAX_PAYLOAD_SIZE - TAG_OVERHEAD
+    
+    chunks_btc = [btc_message[i:i+CHUNK_SIZE] for i in range(0, total_btc_length, CHUNK_SIZE)]
+    total_btc_parts = len(chunks_btc)
+    
+    
+    ###EVERY PART OF THE SIGNED BITCOIN TRANSACTION IS SENT
+    for i, chunk in enumerate(chunks_btc):
+        msg_btc_to_send = f"BTC {total_btc_length} {checksum_btc} {i+1}/{total_btc_parts} {chunk}"
+    
+        iface_D.sendText(msg_btc_to_send)
+        print(f"📨 Sent: {msg_btc_to_send} \n")
+
+        
+        time.sleep(5)  # délai léger pour éviter collisions
+
+
+    
+    ###MESSAGE TEXT TO SEND
+    text_message ="Credits: Bitcoin lille, Nicolas Jaume, ProfEduStream, Synthex, Bitcoinizam & Plan B Network"
+    total_text_length = len(text_message)
+    
+    ###PARAMETERS
+    MAX_PAYLOAD_SIZE = 94
+    TAG_OVERHEAD = 24
+    CHUNK_SIZE = MAX_PAYLOAD_SIZE - TAG_OVERHEAD
+    
+    msg_text_to_send = f"TEXT {total_text_length} {text_message}"
+    
+    iface_D.sendText(msg_text_to_send)
+    print(f"📨 Sent: {msg_text_to_send} \n")
+
+
+    time.sleep(5)
+    
+    iface_D.close()
+    print("✅ Every parts had been sent")
